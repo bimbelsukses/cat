@@ -349,9 +349,22 @@ body.exam-mode { overflow: hidden; user-select: none; }
 </div>
 <div class="modal-body p-4">
 <div class="container" style="max-width:900px">
-<div class="alert alert-info small mb-3"><b>Tips:</b> Gunakan tombol <b>Rumus</b> untuk memasukkan LaTeX jika butuh persamaan.</div>
-<div id="q-list-container"></div>
-<div class="text-center mt-5 mb-5"><button class="btn btn-lg btn-success rounded-pill px-5 shadow" onclick="addNewQuestionBlock()"><i class="fas fa-plus-circle me-2"></i> TAMBAH SOAL</button></div>
+    
+    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm border border-primary">
+        <div>
+            <h6 class="fw-bold mb-1 text-primary"><i class="fas fa-file-excel me-1"></i> Import Soal via Excel</h6>
+            <small class="text-muted">Gunakan template yang disediakan untuk upload massal.</small>
+        </div>
+        <div>
+            <button class="btn btn-sm btn-outline-success fw-bold me-2" onclick="downloadTemplateExcel()"><i class="fas fa-download me-1"></i> Download Template</button>
+            <button class="btn btn-sm btn-primary fw-bold" onclick="document.getElementById('file-excel-q').click()"><i class="fas fa-upload me-1"></i> Upload Excel</button>
+            <input type="file" id="file-excel-q" class="hidden" accept=".xlsx, .xls" onchange="handleExcelUpload(event)">
+        </div>
+    </div>
+    
+    <div class="alert alert-info small mb-3"><b>Tips:</b> Gunakan tombol <b>Rumus</b> untuk memasukkan LaTeX jika butuh persamaan.</div>
+    <div id="q-list-container"></div>
+    <div class="text-center mt-5 mb-5"><button class="btn btn-lg btn-success rounded-pill px-5 shadow" onclick="addNewQuestionBlock()"><i class="fas fa-plus-circle me-2"></i> TAMBAH SOAL SECARA MANUAL</button></div>
 </div>
 </div>
 </div>
@@ -384,7 +397,7 @@ body.exam-mode { overflow: hidden; user-select: none; }
 <script>
 // =========================================================================
 // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbyPR6mVmPXeeZD29BO7Jr02zq3jfJQpzfFzuobuhz2f78oCtj1cZW90H7RS1p0wZrKriA/exec'; 
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbxtGMgH3GDSplQ8Ibuta_y7AwBWW_Gy3b9psQlCYTnPl_Qd9PZgKwA7f4avGNjD8e3ulA/exec'; 
 // =========================================================================
 
 let examSubmitting = false; let user = null; let gData = {};
@@ -556,6 +569,28 @@ function loadPage(page) {
   });
 }
 
+function duplicateExam(id, judul) {
+  Swal.fire({
+    title: 'Duplikat Ujian?',
+    text: `Anda akan menduplikasi ujian "${judul}" beserta seluruh soalnya. Lanjutkan?`,
+    icon: 'question',
+    showCancelButton: true,
+    confirmButtonText: 'Ya, Duplikat'
+  }).then((r) => {
+    if (r.isConfirmed) {
+      showLoad(true);
+      gasAPI('duplicateExam', { id: id, userId: user.ID }).then(res => {
+        showLoad(false);
+        if (res.status === 'success') {
+          Swal.fire('Berhasil', res.msg, 'success').then(() => loadPage('admin-ujian'));
+        } else {
+          Swal.fire('Gagal', res.msg, 'error');
+        }
+      });
+    }
+  });
+}
+
 function renderContent(page) {
   const area = $('#content-area'); let h = '';
   if (page === 'admin-home') {
@@ -564,11 +599,10 @@ function renderContent(page) {
   else if (page === 'admin-ujian') {
     h = `<div class="d-flex justify-content-between mb-3"><button class="btn btn-primary shadow-sm" onclick="openExamModal()">+ Buat Tryout Baru</button></div><div class="row g-4" id="admin-ujian-list">`;
     gData.exams.forEach(e => {
-      h += `<div class="col-md-6 col-lg-4 ujian-card"><div class="card h-100 shadow-sm border-0"><div class="card-body"><div class="d-flex justify-content-between mb-2"><span class="badge bg-primary">${e.TargetKelas || 'UMUM'}</span></div><h5 class="fw-bold text-dark">${e.Judul}</h5><p class="text-muted small"><i class="fas fa-book me-1"></i> ${e.Formasi}</p><div class="d-flex gap-2"><button class="btn btn-sm btn-outline-dark flex-fill" onclick="openExamModal('${encodeURIComponent(JSON.stringify(e))}')">Edit</button> <button class="btn btn-sm btn-outline-primary flex-fill" onclick="manageQ('${e.ExamID}')"><i class="fas fa-list me-1"></i> Soal</button> <button class="btn btn-sm btn-danger" onclick="delExam('${e.ExamID}')"><i class="fas fa-trash"></i></button></div></div></div></div>`;
+      h += `<div class="col-md-6 col-lg-4 ujian-card"><div class="card h-100 shadow-sm border-0"><div class="card-body"><div class="d-flex justify-content-between mb-2"><span class="badge bg-primary">${e.TargetKelas || 'UMUM'}</span></div><h5 class="fw-bold text-dark">${e.Judul}</h5><p class="text-muted small"><i class="fas fa-book me-1"></i> ${e.Formasi}</p><div class="d-flex gap-2 flex-wrap"><button class="btn btn-sm btn-outline-dark flex-fill" onclick="openExamModal('${encodeURIComponent(JSON.stringify(e))}')">Edit</button> <button class="btn btn-sm btn-outline-primary flex-fill" onclick="manageQ('${e.ExamID}')"><i class="fas fa-list me-1"></i> Soal</button> <button class="btn btn-sm btn-outline-info flex-fill" onclick="duplicateExam('${e.ExamID}', '${e.Judul}')"><i class="fas fa-copy"></i> Duplikat</button> <button class="btn btn-sm btn-danger" onclick="delExam('${e.ExamID}')"><i class="fas fa-trash"></i></button></div></div></div></div>`;
     });
     h += '</div>';
   }
-  // --- HALAMAN KELOMPOK TRYOUT BARU ---
   else if (page === 'peserta-kelompok') {
     h = `<h4 class="fw-bold mb-4 border-bottom pb-2 text-dark"><i class="fas fa-folder-open text-warning me-2"></i>Kelompok Ujian Tryout</h4><div class="row g-4" id="folder-container">`;
     let groups = {};
@@ -601,7 +635,6 @@ function renderContent(page) {
   else if (page === 'peserta-home') {
     h = `<div class="card mb-4 border-0 shadow-sm bg-primary text-white" style="border-radius:12px;"><div class="card-body p-4"><h4 class="fw-bold">Selamat Datang, ${user.Nama}</h4><p class="mb-0 opacity-75">Ini adalah tampilan riwayat dan tryout terbaru Anda.</p></div></div>`;
     
-    // --- TRYOUT AKTIF DENGAN DESAIN KARTU PREMIUM ---
     h += `<h5 class="fw-bold mb-3 border-bottom pb-2 mt-4 text-dark"><i class="fas fa-calendar-check text-success me-2"></i> Tryout Aktif Anda</h5><div class="row g-4 mb-5">`;
     if(!gData.availableExams || gData.availableExams.length === 0) { 
         h += '<div class="col-12"><div class="alert alert-light border shadow-sm text-center text-muted">Belum ada jadwal tryout aktif saat ini.</div></div>'; 
@@ -635,7 +668,6 @@ function renderContent(page) {
     }
     h += `</div>`;
 
-    // --- RIWAYAT NILAI ---
     h += `<h5 class="fw-bold mb-3 border-bottom pb-2 mt-5"><i class="fas fa-history me-2 text-primary"></i> Riwayat Nilai & Evaluasi</h5>`;
     if(!gData.history || gData.history.length === 0) { h += '<div class="alert alert-light border shadow-sm">Belum ada riwayat pengerjaan.</div>'; }
     else {
@@ -658,7 +690,6 @@ function renderContent(page) {
   area.html(h);
 }
 
-// Fungsi Render untuk isi folder Kategori
 function renderIsiKelompok(cat) {
     $('#folder-container').addClass('hidden');
     let exams = gData.availableExams.filter(e => (e.TargetKelas || 'UMUM') === cat);
@@ -750,9 +781,6 @@ function kerjakanUlang(eid) {
   });
 }
 
-// -------------------------------------------------------------
-// FUNGSI RENDER PDF (PERBAIKAN WARNA CORET/HIJAU)
-// -------------------------------------------------------------
 function downloadPembahasan(eid, judul) {
   showLoad(true);
   gasAPI('getPembahasan', {eid: eid, userId: user.ID}).then(res => {
@@ -828,7 +856,6 @@ function downloadPembahasan(eid, judul) {
   });
 }
 
-// ======================== ADMIN CRUD USERS ========================
 function renderUsers(users) {
   let h = `<div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
   <div><button class="btn btn-success shadow-sm me-2" onclick="$('#modalUser').modal('show');$('#modalUser form')[0].reset();$('#mu-id').val('');">+ Tambah User</button></div>
@@ -851,7 +878,6 @@ function editUser(s){ const u=JSON.parse(decodeURIComponent(s)); $('#modalUser')
 function saveUser(){ const d={id:$('#mu-id').val(), nama:$('#mu-nama').val(), username:$('#mu-user').val(), password:$('#mu-pass').val(), role:$('#mu-role').val(), sekolah:$('#mu-sekolah').val()}; showLoad(true); gasAPI('manageUser', {mode:'save', data:d}).then(()=>{showLoad(false);$('#modalUser').modal('hide'); loadPage('admin-users')}); }
 function delUser(id){ Swal.fire({title:'Hapus?', icon:'warning', showCancelButton:true}).then(r=>{if(r.isConfirmed) gasAPI('manageUser', {mode:'delete', data:{id:id}}).then(()=>{loadPage('admin-users')});}); }
 
-// ======================== ADMIN CRUD EXAMS & QUESTIONS ========================
 function saveExam() {
   const formEl = document.getElementById('frm-exam');
   const fd = new FormData(formEl); const d = Object.fromEntries(fd.entries());
@@ -971,7 +997,84 @@ function deleteQBlock(uid) {
   });
 }
 
-// ======================== ADMIN REKAP & MONITORING ========================
+// -----------------------------------------------------------------
+// FITUR BARU: DOWNLOAD TEMPLATE & IMPORT EXCEL
+// -----------------------------------------------------------------
+function downloadTemplateExcel() {
+    const ws_data = [
+        ["Nomor", "Tipe", "Bagian", "Pertanyaan", "Opsi", "Kunci Jawaban", "Skor", "Pembahasan"],
+        [1, "PGS", "Manajerial", "Berikut ini yang merupakan ibukota negara Indonesia adalah...", "Jakarta | Bandung | Surabaya | Semarang", "Jakarta", 10, "Sudah jelas ibukota Indonesia adalah Jakarta."],
+        [2, "PGK", "Sosial Kultural", "Pilihlah 2 warna yang ada di bendera Indonesia!", "Merah | Putih | Biru | Hijau", "Merah | Putih", 10, "Bendera Indonesia adalah Merah dan Putih."]
+    ];
+    const ws = XLSX.utils.aoa_to_sheet(ws_data);
+    ws['!cols'] = [ {wpx: 40}, {wpx: 60}, {wpx: 100}, {wpx: 250}, {wpx: 250}, {wpx: 150}, {wpx: 50}, {wpx: 250} ];
+    
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "TemplateSoal");
+    XLSX.writeFile(wb, "Template_Soal_Belajar_Inovasi.xlsx");
+}
+
+function handleExcelUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+        const data = new Uint8Array(evt.target.result);
+        const workbook = XLSX.read(data, {type: 'array'});
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const json = XLSX.utils.sheet_to_json(sheet);
+        
+        if (json.length === 0) {
+            Swal.fire('Kosong', 'File excel tidak berisi data soal.', 'warning');
+            return;
+        }
+        
+        let parsedQs = [];
+        json.forEach((row, index) => {
+            let opsiRaw = row['Opsi'] ? String(row['Opsi']).split('|').map(s => s.trim()) : [];
+            let kunciRaw = row['Kunci Jawaban'] ? String(row['Kunci Jawaban']).split('|').map(s => s.trim()) : [];
+            
+            parsedQs.push({
+                num: row['Nomor'] || (index + 1),
+                type: row['Tipe'] || 'PGS',
+                bagian: row['Bagian'] || 'Manajerial',
+                text: row['Pertanyaan'] || '',
+                options: opsiRaw,
+                key: kunciRaw,
+                score: row['Skor'] || 10,
+                pembahasan: row['Pembahasan'] || ''
+            });
+        });
+        
+        Swal.fire({
+            title: 'Konfirmasi Upload',
+            text: `Berhasil memindai ${parsedQs.length} soal dari Excel. Lanjutkan menyimpan ke sistem?`,
+            icon: 'question',
+            showCancelButton: true,
+            confirmButtonText: 'Ya, Simpan Semua'
+        }).then((res) => {
+            if (res.isConfirmed) {
+                showLoad(true);
+                gasAPI('batchSaveQ', {eid: activeExamId, data: parsedQs, userId: user.ID}).then(r => {
+                    showLoad(false);
+                    document.getElementById('file-excel-q').value = ''; 
+                    if (r.status === 'success') {
+                        Swal.fire('Sukses', r.msg, 'success');
+                        loadQList(); 
+                    } else {
+                        Swal.fire('Error', r.msg, 'error');
+                    }
+                });
+            } else {
+                document.getElementById('file-excel-q').value = ''; 
+            }
+        });
+    };
+    reader.readAsArrayBuffer(file);
+}
+
 function renderRecapTable() {
   let h = `<div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0" id="tbl-rekap"><thead class="table-light"><tr><th>Nama Peserta</th><th>Tryout</th><th>Nilai Akhir</th><th>Aksi</th></tr></thead><tbody id="tbl-rekap-body">`;
   rekapAllData.forEach(r => { h += `<tr><td><div class="fw-bold">${r.NamaSiswa}</div></td><td>${r.Formasi} - ${r.JudulUjian}</td><td><span class="badge bg-primary fs-6">${r.TotalNilai}</span></td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteResult('${r.ResultID}')"><i class="fas fa-trash"></i></button></td></tr>`; });
@@ -1013,7 +1116,6 @@ function printDaftarHadir() {
 
 function handleResetCache() { Swal.fire({title:'Reset Cache?', text:"Membersihkan data sementara sistem.", icon:'warning', showCancelButton:true}).then((r)=>{ if(r.isConfirmed){ showLoad(true); gasAPI('resetCache').then(res => {showLoad(false);Swal.fire('Sukses',res.msg,'success')}); }}); }
 
-// ======================== EXAM ENGINE ========================
 function triggerViolation(msg) {
   if(violationLock || isExamFinished) return; violationLock = true; violationCount++;
   Swal.fire({ title: 'PELANGGARAN DETEKSI!', text: msg + ` (Peringatan ke-${violationCount} dari ${maxViolations})`, icon: 'warning', confirmButtonText: 'Saya Mengerti' }).then(() => {
