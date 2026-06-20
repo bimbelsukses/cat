@@ -187,8 +187,7 @@ body.exam-mode { overflow: hidden; user-select: none; }
 <li><a onclick="handleResetCache()" class="nav-link text-warning"><i class="fas fa-bolt me-2"></i>Reset Cache</a></li>
 </ul>
 <ul class="list-unstyled components hidden" id="menu-peserta">
-<li><a onclick="loadPage('peserta-home')" class="nav-link active"><i class="fas fa-pencil-alt me-2"></i>Dashboard Ujian</a></li>
-<li><a onclick="loadPage('peserta-kelompok')" class="nav-link"><i class="fas fa-folder-open me-2"></i>Kelompok Tryout</a></li>
+<li><a onclick="loadPage('peserta-kelompok')" class="nav-link active"><i class="fas fa-folder-open me-2"></i>Kelompok Tryout</a></li>
 </ul>
 <div class="p-3 mt-auto border-top border-secondary position-absolute bottom-0 w-100">
 <div class="mb-3 text-white small"><i class="fas fa-user-circle me-1"></i> <span id="u-name-disp" class="fw-bold">User</span></div>
@@ -282,7 +281,7 @@ body.exam-mode { overflow: hidden; user-select: none; }
 <div class="container py-4">
 <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
 <h3 class="fw-bold text-primary"><i class="fas fa-poll me-2"></i>Hasil & Konfirmasi</h3>
-<button class="btn btn-outline-dark" onclick="$('#view-review').addClass('hidden'); loadPage('peserta-home');"><i class="fas fa-arrow-left me-1"></i> Kembali ke Dashboard</button>
+<button class="btn btn-outline-dark" onclick="$('#view-review').addClass('hidden'); loadPage('peserta-kelompok');"><i class="fas fa-arrow-left me-1"></i> Kembali ke Dashboard</button>
 </div>
 <div class="card shadow-sm border-0 mb-4 bg-primary text-white">
 <div class="card-body text-center">
@@ -349,7 +348,6 @@ body.exam-mode { overflow: hidden; user-select: none; }
 </div>
 <div class="modal-body p-4">
 <div class="container" style="max-width:900px">
-    
     <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3 bg-white p-3 rounded shadow-sm border border-primary">
         <div>
             <h6 class="fw-bold mb-1 text-primary"><i class="fas fa-file-excel me-1"></i> Import Soal via Excel</h6>
@@ -361,7 +359,6 @@ body.exam-mode { overflow: hidden; user-select: none; }
             <input type="file" id="file-excel-q" class="hidden" accept=".xlsx, .xls" onchange="handleExcelUpload(event)">
         </div>
     </div>
-    
     <div class="alert alert-info small mb-3"><b>Tips:</b> Gunakan tombol <b>Rumus</b> untuk memasukkan LaTeX jika butuh persamaan.</div>
     <div id="q-list-container"></div>
     <div class="text-center mt-5 mb-5"><button class="btn btn-lg btn-success rounded-pill px-5 shadow" onclick="addNewQuestionBlock()"><i class="fas fa-plus-circle me-2"></i> TAMBAH SOAL SECARA MANUAL</button></div>
@@ -397,7 +394,7 @@ body.exam-mode { overflow: hidden; user-select: none; }
 <script>
 // =========================================================================
 // PASTE URL WEB APP APPS SCRIPT ANDA DI SINI
-const GAS_URL = 'https://script.google.com/macros/s/AKfycbxtGMgH3GDSplQ8Ibuta_y7AwBWW_Gy3b9psQlCYTnPl_Qd9PZgKwA7f4avGNjD8e3ulA/exec'; 
+const GAS_URL = 'https://script.google.com/macros/s/AKfycbyyIov1dtFxZZHkogmMjf0wNH9Bt8UgasVHuNmCnPEMJ_joIYCaImePbCmZkbM3Wek0cA/exec'; 
 // =========================================================================
 
 let examSubmitting = false; let user = null; let gData = {};
@@ -526,14 +523,14 @@ function initDash() {
   const role = String(user.Role || '').trim().toLowerCase();
   $('#user-role-disp').text(role.toUpperCase());
   $('.components').addClass('hidden');
-  if(role === 'peserta') { $('#menu-peserta').removeClass('hidden'); loadPage('peserta-home'); }
+  if(role === 'peserta') { $('#menu-peserta').removeClass('hidden'); loadPage('peserta-kelompok'); }
   else if(role === 'admin') { $('#menu-admin').removeClass('hidden'); loadPage('admin-home'); }
   else { Swal.fire('Akses Ditolak', 'Role akun Anda tidak dikenali.', 'error'); }
 }
 
 function appRefresh() {
   if(currentPageTrack) loadPage(currentPageTrack);
-  else { const role = String(user.Role || '').trim().toLowerCase(); loadPage(role === 'admin' ? 'admin-home' : 'peserta-home'); }
+  else { const role = String(user.Role || '').trim().toLowerCase(); loadPage(role === 'admin' ? 'admin-home' : 'peserta-kelompok'); }
 }
 
 function hasilUjianRedirection() { loadPage('hasil-rekap'); }
@@ -631,43 +628,8 @@ function renderContent(page) {
         });
     }
     h += `</div><div id="isi-kelompok-container" class="mt-4 hidden"></div>`;
-  }
-  else if (page === 'peserta-home') {
-    h = `<div class="card mb-4 border-0 shadow-sm bg-primary text-white" style="border-radius:12px;"><div class="card-body p-4"><h4 class="fw-bold">Selamat Datang, ${user.Nama}</h4><p class="mb-0 opacity-75">Ini adalah tampilan riwayat dan tryout terbaru Anda.</p></div></div>`;
     
-    h += `<h5 class="fw-bold mb-3 border-bottom pb-2 mt-4 text-dark"><i class="fas fa-calendar-check text-success me-2"></i> Tryout Aktif Anda</h5><div class="row g-4 mb-5">`;
-    if(!gData.availableExams || gData.availableExams.length === 0) { 
-        h += '<div class="col-12"><div class="alert alert-light border shadow-sm text-center text-muted">Belum ada jadwal tryout aktif saat ini.</div></div>'; 
-    } else {
-      gData.availableExams.forEach(e => {
-        let btnText = 'KERJAKAN', btnClass = 'btn-buy';
-        if (e.IsFinished) { btnText = 'KERJAKAN ULANG'; btnClass = 'btn-buy btn-buy-retake'; }
-        
-        h += `<div class="col-md-6 col-lg-4">
-                <div class="katalog-card h-100">
-                    <div class="katalog-header">
-                        <span class="badge bg-light text-primary mb-2">${e.TargetKelas || 'UMUM'}</span>
-                        <h5 class="fw-bold mb-0 lh-base" style="font-size: 1.1rem;">${e.Judul}</h5>
-                    </div>
-                    <div class="katalog-body d-flex flex-column">
-                        <div class="mb-4 mt-2">
-                            <div class="katalog-feature"><i class="fas fa-book"></i> Formasi: ${e.Formasi}</div>
-                            <div class="katalog-feature"><i class="fas fa-clock"></i> Durasi: ${e.Durasi} Menit</div>
-                            <div class="katalog-feature"><i class="fas fa-check-circle"></i> Sesuai Kisi-kisi Terbaru</div>
-                            <div class="katalog-feature"><i class="fas fa-laptop-code"></i> Simulasi Sistem CAT</div>
-                        </div>
-                        <div class="mt-auto">
-                            <button class="${btnClass}" onclick="promptToken('${e.ExamID}', '${e.Judul}', '${e.Token}')">
-                                ${btnText} <i class="fas fa-arrow-right ms-2"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-              </div>`;
-      });
-    }
-    h += `</div>`;
-
+    // --- RIWAYAT NILAI ---
     h += `<h5 class="fw-bold mb-3 border-bottom pb-2 mt-5"><i class="fas fa-history me-2 text-primary"></i> Riwayat Nilai & Evaluasi</h5>`;
     if(!gData.history || gData.history.length === 0) { h += '<div class="alert alert-light border shadow-sm">Belum ada riwayat pengerjaan.</div>'; }
     else {
@@ -733,7 +695,7 @@ function renderIsiKelompok(cat) {
 
 function promptToken(eid, judul, trueToken) {
   let msg = encodeURIComponent(`Halo Admin Bimbelajar.com,\nSaya telah melakukan pembayaran dan membutuhkan Akses Token untuk paket Tryout: *${judul}*.\nTerima kasih.`);
-  let waUrl = `https://wa.me/6287880641076?text=${msg}`;
+  let waUrl = `https://wa.me/6285895283075?text=${msg}`;
   Swal.fire({
     title: 'Masukkan Token Ujian',
     html: `
@@ -776,7 +738,7 @@ function kerjakanUlang(eid) {
   }).then((res) => {
     if(res.isConfirmed) {
       showLoad(true);
-      gasAPI('reqRetake', {eid: eid, userId: user.ID}).then(r => { showLoad(false); if(r.status === 'success') { Swal.fire('Sesi Direset', 'Sesi ujian berhasil dibuka kembali. Silakan klik Mulai Tryout.', 'success').then(()=>loadPage('peserta-home')); } });
+      gasAPI('reqRetake', {eid: eid, userId: user.ID}).then(r => { showLoad(false); if(r.status === 'success') { Swal.fire('Sesi Direset', 'Sesi ujian berhasil dibuka kembali. Silakan klik Mulai Tryout.', 'success').then(()=>loadPage('peserta-kelompok')); } });
     }
   });
 }
@@ -997,9 +959,6 @@ function deleteQBlock(uid) {
   });
 }
 
-// -----------------------------------------------------------------
-// FITUR BARU: DOWNLOAD TEMPLATE & IMPORT EXCEL
-// -----------------------------------------------------------------
 function downloadTemplateExcel() {
     const ws_data = [
         ["Nomor", "Tipe", "Bagian", "Pertanyaan", "Opsi", "Kunci Jawaban", "Skor", "Pembahasan"],
@@ -1011,7 +970,7 @@ function downloadTemplateExcel() {
     
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "TemplateSoal");
-    XLSX.writeFile(wb, "Template_Soal_Belajar_Inovasi.xlsx");
+    XLSX.writeFile(wb, "Template_Soal_BELAJAR_INOVASI.xlsx");
 }
 
 function handleExcelUpload(e) {
