@@ -770,7 +770,7 @@ function downloadPembahasan(eid, judul) {
         }
         
         html += `<div class="q-box">
-        <h4 style="margin-top:0;">Soal No. ${q.Nomor || i+1} <span style="font-size:12px; color:#666;">(${q.Bagian || 'Soal Umum'})</span></h4>
+        <h4 style="margin-top:0;">Soal No. ${q.Nomor || i+1} <span style="font-size:12px; color:#666;">(${q.Bagian || 'Soal'})</span></h4>
         <div>${q.Pertanyaan}</div>
         ${optsHtml}
         <div class="kunci">Jawaban Anda: ${stylingJawaban} <br> Jawaban Benar: <b>${kunciText}</b></div>
@@ -825,7 +825,7 @@ function loadQList() {
 function renderQuestionBlock(q, idx) {
   const uid = q.QID ? q.QID : 'NEW_' + Math.random().toString(36).substr(2, 9);
   const nomor = q.Nomor || (idx + 1);
-  const bagianVal = q.Bagian || 'Soal Umum';
+  const bagianVal = q.Bagian || 'Soal';
   const safeJson = encodeURIComponent(JSON.stringify(q));
   return `
   <div class="card mb-4 border-0 shadow-sm q-block" id="block-${uid}" data-id="${uid}" data-q-obj="${safeJson}">
@@ -845,7 +845,7 @@ function renderQuestionBlock(q, idx) {
   </div>
   <div class="col-md-3"><label class="small fw-bold">Bagian Tes</label>
   <select name="bagian" class="form-select" id="bagian-${uid}">
-  <option value="Soal Umum" ${bagianVal=='Soal Umum'?'selected':''}>Soal Umum</option>
+  <option value="Soal" ${bagianVal=='Soal'?'selected':''}>Soal</option>
   </select>
   </div>
   <div class="col-md-2"><label class="small fw-bold">Skor</label><input type="number" step="0.1" name="score" class="form-control" value="${q.Skor || 10}"></div>
@@ -912,8 +912,8 @@ function deleteQBlock(uid) {
 function downloadTemplateExcel() {
     const ws_data = [
         ["Nomor", "Tipe", "Bagian", "Pertanyaan", "Opsi", "Kunci Jawaban", "Skor", "Pembahasan"],
-        [1, "PGS", "Soal Umum", "Berikut ini yang merupakan ibukota negara Indonesia adalah...", "Jakarta | Bandung | Surabaya | Semarang", "Jakarta", 10, "Sudah jelas ibukota Indonesia adalah Jakarta."],
-        [2, "PGK", "Soal Umum", "Pilihlah 2 warna yang ada di bendera Indonesia!", "Merah | Putih | Biru | Hijau", "Merah | Putih", 10, "Bendera Indonesia adalah Merah dan Putih."]
+        [1, "PGS", "Soal", "Berikut ini yang merupakan ibukota negara Indonesia adalah...", "Jakarta | Bandung | Surabaya | Semarang", "Jakarta", 10, "Sudah jelas ibukota Indonesia adalah Jakarta."],
+        [2, "PGK", "Soal", "Pilihlah 2 warna yang ada di bendera Indonesia!", "Merah | Putih | Biru | Hijau", "Merah | Putih", 10, "Bendera Indonesia adalah Merah dan Putih."]
     ];
     const ws = XLSX.utils.aoa_to_sheet(ws_data);
     ws['!cols'] = [ {wpx: 40}, {wpx: 60}, {wpx: 100}, {wpx: 250}, {wpx: 250}, {wpx: 150}, {wpx: 50}, {wpx: 250} ];
@@ -947,7 +947,7 @@ function handleExcelUpload(e) {
             parsedQs.push({
                 num: row['Nomor'] || (index + 1),
                 type: row['Tipe'] || 'PGS',
-                bagian: row['Bagian'] || 'Soal Umum',
+                bagian: row['Bagian'] || 'Soal',
                 text: row['Pertanyaan'] || '',
                 options: opsiRaw,
                 key: kunciRaw,
@@ -1038,7 +1038,7 @@ function toggleNavPanel() { $('#sidebar-grid').toggleClass('d-none'); }
 function runExam(qs, dur, isResume) {
   $('#view-dashboard').addClass('hidden'); $('#view-exam').removeClass('hidden'); $('body').addClass('exam-mode');
   const c = $('#q-slides-container'); const g = $('#nav-grid'); c.empty(); g.empty();
-  const bagians = ["Soal Umum"];
+  const bagians = ["Soal"];
   
   bagians.forEach(b => { g.append(`<div class="q-nav-section-title w-100 mt-2 mb-2 text-center" style="font-size: 0.85rem; color: #64748b; font-weight: bold;">${b}</div><div class="q-grid w-100" id="grid-${b.replace(/\s+/g, '-')}"></div>`); });
   
@@ -1054,7 +1054,7 @@ function runExam(qs, dur, isResume) {
       <div class="d-flex flex-column gap-2">${inp}</div>
     </div>`);
     
-    let currentBagian = q.Bagian || 'Soal Umum'; let targetGridId = `#grid-${currentBagian.replace(/\s+/g, '-')}`;
+    let currentBagian = q.Bagian || 'Soal'; let targetGridId = `#grid-${currentBagian.replace(/\s+/g, '-')}`;
     $(targetGridId).append(`<button id="nb-${i}" class="btn-nav-grid shadow-sm" onclick="jump(${i})">${i+1}</button>`);
   });
   
