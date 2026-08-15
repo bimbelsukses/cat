@@ -287,6 +287,11 @@ body.exam-mode { overflow: hidden; user-select: none; }
 <div class="col-md-6">
     <label class="small fw-bold">Kategori Ujian</label>
     <select name="kategori" id="ex-kategori" class="form-select" required>
+        <!-- Kategori Baru Ditambahkan di Sini -->
+        <option value="UKPPG PRAJABATAN">UKPPG PRAJABATAN</option>
+        <option value="UKPPG DALAM JABATAN">UKPPG DALAM JABATAN</option>
+        <option value="LPDP">LPDP</option>
+        <option value="PSIKOTEST">PSIKOTEST</option>
         <option value="CPNS">CPNS</option>
         <option value="PPPK">PPPK</option>
         <option value="PPG">PPG</option>
@@ -902,13 +907,28 @@ function saveQBlock(uid) {
   const payload={id:id, num:num, type:type, text:text, options:opts, key:keys, keyIndices:keyIndices, score:score, bagian:bagian, pembahasan:pembahasan};
   gasAPI('saveQ', {eid: activeExamId, data: payload, userId: user.ID}).then(res => { if(res.status==='success'){ toast('success','Soal Disimpan!'); loadQList(); } });
 }
+
+// UPDATED: MENDUKUNG PROSES TUNGGU HINGGA PENGHAPUSAN BERHASIL SEBELUM MERELOAD
 function deleteQBlock(uid) {
   const id=$(`#block-${uid}`).find('input[name="id"]').val();
   if(!id){ $(`#block-${uid}`).remove(); return; }
   Swal.fire({title:'Hapus Soal?',icon:'warning',showCancelButton:true}).then(r=>{
-    if(r.isConfirmed){ $(`#block-${uid}`).fadeOut(); gasAPI('delQ', {id: id}); }
+    if(r.isConfirmed) { 
+        showLoad(true);
+        gasAPI('delQ', {id: id}).then(res => {
+            showLoad(false);
+            if(res.status === 'success') {
+                $(`#block-${uid}`).fadeOut(() => $(this).remove());
+                toast('success', 'Soal berhasil dihapus!');
+                loadQList(); // Memastikan list termuat ulang secara bersih dan aman.
+            } else {
+                Swal.fire('Gagal Menghapus', res.msg, 'error');
+            }
+        });
+    }
   });
 }
+
 function downloadTemplateExcel() {
     const ws_data = [
         ["Nomor", "Tipe", "Bagian", "Pertanyaan", "Opsi", "Kunci Jawaban", "Skor", "Pembahasan"],
