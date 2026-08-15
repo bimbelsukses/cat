@@ -287,7 +287,6 @@ body.exam-mode { overflow: hidden; user-select: none; }
 <div class="col-md-6">
     <label class="small fw-bold">Kategori Ujian</label>
     <select name="kategori" id="ex-kategori" class="form-select" required>
-        <!-- Kategori Baru Ditambahkan di Sini -->
         <option value="PPPK KEMENKES/KESEHATAN">PPPK KEMENKES/KESEHATAN</option>
         <option value="UKPPG PRAJABATAN">UKPPG PRAJABATAN</option>
         <option value="UKPPG DALAM JABATAN">UKPPG DALAM JABATAN</option>
@@ -909,7 +908,6 @@ function saveQBlock(uid) {
   gasAPI('saveQ', {eid: activeExamId, data: payload, userId: user.ID}).then(res => { if(res.status==='success'){ toast('success','Soal Disimpan!'); loadQList(); } });
 }
 
-// UPDATED: MENDUKUNG PROSES TUNGGU HINGGA PENGHAPUSAN BERHASIL SEBELUM MERELOAD
 function deleteQBlock(uid) {
   const id=$(`#block-${uid}`).find('input[name="id"]').val();
   if(!id){ $(`#block-${uid}`).remove(); return; }
@@ -921,7 +919,7 @@ function deleteQBlock(uid) {
             if(res.status === 'success') {
                 $(`#block-${uid}`).fadeOut(() => $(this).remove());
                 toast('success', 'Soal berhasil dihapus!');
-                loadQList(); // Memastikan list termuat ulang secara bersih dan aman.
+                loadQList(); 
             } else {
                 Swal.fire('Gagal Menghapus', res.msg, 'error');
             }
@@ -1003,11 +1001,33 @@ function handleExcelUpload(e) {
     };
     reader.readAsArrayBuffer(file);
 }
+
+// PERBAIKAN TAMPILAN REKAP: MENAMBAHKAN PENCARIAN (SEARCH BAR)
 function renderRecapTable() {
-  let h = `<div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0" id="tbl-rekap"><thead class="table-light"><tr><th>Nama Peserta</th><th>Tryout</th><th>Nilai Akhir</th><th>Aksi</th></tr></thead><tbody id="tbl-rekap-body">`;
-  rekapAllData.forEach(r => { h += `<tr><td><div class="fw-bold">${r.NamaSiswa}</div></td><td>${r.JumlahSoal} Soal - ${r.JudulUjian}</td><td><span class="badge bg-primary fs-6">${r.TotalNilai}</span></td><td><button class="btn btn-sm btn-outline-danger" onclick="deleteResult('${r.ResultID}')"><i class="fas fa-trash"></i></button></td></tr>`; });
-  h += `</tbody></table></div></div></div>`; $('#content-area').html(h);
+  let h = `<div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
+  <h5 class="fw-bold text-primary mb-0"><i class="fas fa-chart-bar me-2"></i>Rekapitulasi Nilai</h5>
+  <input type="text" class="form-control" style="width:250px" placeholder="Cari data..." onkeyup="filterTable('tbl-rekap', this.value)">
+  </div>
+  <div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive">
+  <table class="table table-hover align-middle mb-0" id="tbl-rekap"><thead class="table-light">
+  <tr><th>Nama Peserta</th><th>Tryout</th><th>Nilai Akhir</th><th>Aksi</th></tr></thead><tbody id="tbl-rekap-body">`;
+  
+  rekapAllData.forEach(r => { 
+      h += `<tr>
+      <td>
+        <div class="fw-bold">${r.NamaSiswa}</div>
+        <small class="text-muted"><i class="far fa-clock"></i> ${r.WaktuSubmit}</small>
+      </td>
+      <td>${r.JumlahSoal} Soal - ${r.JudulUjian}</td>
+      <td><span class="badge bg-primary fs-6">${r.TotalNilai}</span></td>
+      <td><button class="btn btn-sm btn-outline-danger" onclick="deleteResult('${r.ResultID}')"><i class="fas fa-trash"></i></button></td>
+      </tr>`; 
+  });
+  
+  h += `</tbody></table></div></div></div>`; 
+  $('#content-area').html(h);
 }
+
 function deleteResult(rid) {
   Swal.fire({title:'Hapus & Reset?', text:'Peserta bisa mengerjakan tryout kembali.', icon:'warning', showCancelButton:true}).then(r=>{
     if(r.isConfirmed) { showLoad(true); gasAPI('delResult', {rid: rid}).then(res => { showLoad(false); if(res.status==='success'){ Swal.fire('Berhasil',res.msg,'success'); loadPage('hasil-rekap'); } else Swal.fire('Gagal',res.msg,'error'); }); }
