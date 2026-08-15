@@ -907,7 +907,6 @@ function saveQBlock(uid) {
   const payload={id:id, num:num, type:type, text:text, options:opts, key:keys, keyIndices:keyIndices, score:score, bagian:bagian, pembahasan:pembahasan};
   gasAPI('saveQ', {eid: activeExamId, data: payload, userId: user.ID}).then(res => { if(res.status==='success'){ toast('success','Soal Disimpan!'); loadQList(); } });
 }
-
 function deleteQBlock(uid) {
   const id=$(`#block-${uid}`).find('input[name="id"]').val();
   if(!id){ $(`#block-${uid}`).remove(); return; }
@@ -927,7 +926,6 @@ function deleteQBlock(uid) {
     }
   });
 }
-
 function downloadTemplateExcel() {
     const ws_data = [
         ["Nomor", "Tipe", "Bagian", "Pertanyaan", "Opsi", "Kunci Jawaban", "Skor", "Pembahasan"],
@@ -1007,8 +1005,15 @@ function renderRecapTable() {
   let h = `<div class="d-flex justify-content-between mb-3 flex-wrap gap-2">
   <h5 class="fw-bold text-primary mb-0"><i class="fas fa-chart-bar me-2"></i>Rekapitulasi Nilai</h5>
   <input type="text" class="form-control" style="width:250px" placeholder="Cari data..." onkeyup="filterTable('tbl-rekap', this.value)">
-  </div>
-  <div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive">
+  </div>`;
+
+  if (!rekapAllData || rekapAllData.length === 0) {
+      h += `<div class="alert alert-warning text-center shadow-sm border-0 mt-4"><i class="fas fa-exclamation-circle fa-2x mb-2 text-warning"></i><br>Belum ada data nilai / rekap kosong.</div>`;
+      $('#content-area').html(h);
+      return;
+  }
+
+  h += `<div class="card border-0 shadow-sm"><div class="card-body p-0"><div class="table-responsive">
   <table class="table table-hover align-middle mb-0" id="tbl-rekap"><thead class="table-light">
   <tr><th>Nama Peserta</th><th>Tryout</th><th>Nilai Akhir</th><th>Aksi</th></tr></thead><tbody id="tbl-rekap-body">`;
   
